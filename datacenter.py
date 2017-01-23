@@ -1,5 +1,5 @@
 
-def main:
+def main():
 	print "Start datacenter"
 	exit()
 

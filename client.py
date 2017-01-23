@@ -10,7 +10,7 @@ def requestTickets(kiosk, tickets):
 	return response
 
 def cmdUI(kiosks, delay, numtickets):
-	done = false
+	done = False
 	while not done:
 		#print information
 		i = 0
@@ -29,7 +29,7 @@ def cmdUI(kiosks, delay, numtickets):
 			print "Input out of range"
 			continue
 		if input == i:
-			done = true
+			done = True
 			break
 		myKiosk = input
 		#ask user for number of tickets
@@ -42,7 +42,7 @@ def cmdUI(kiosks, delay, numtickets):
 		#request to purchase tickets from selected kiosk
 		response = requestTickets(myKiosk, buytickets)
 		print response
-def main:
+def main():
 	print "Start client"
 	with open("config.txt") as f:
 		lines = f.readlines()
