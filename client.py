@@ -65,7 +65,7 @@ def main:
 	if numtickets == None:
 		print "Error: tickets not found in config file"
 		exit()
-	
+	cmdUI(kiosks, delay, numtickets)
 	exit()
 
 if __name__ == "__main__":
