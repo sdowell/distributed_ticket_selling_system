@@ -6,6 +6,7 @@ def requestTickets(kiosk, tickets):
 	s.send('buy ' + str(tickets))
 	
 	response = s.recv(1024)
+	s.close()
 	return response
 
 def cmdUI(kiosks, delay, numtickets):
