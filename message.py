@@ -6,7 +6,8 @@ BUY_SUCCESS = 1
 BUY_FAIL = 0
 REQUEST_MESSAGE_CODE = 3
 TOTAL_KIOSKS = None 
-
+REPLY_MESSAGE_CODE = 4
+RELEASE_MESSAGE_CODE = 5
 class Message:
 
 	def __init__(self, data):
@@ -27,8 +28,41 @@ class Message:
 			return BuyMessageResponse.deserialize(data)
 		elif message_type == REQUEST_MESSAGE_CODE:
 			return RequestMessage.deserialize(data)
+		elif message_type == REPLY_MESSAGE_CODE:
+			return ReplyMessage.deserialize(data)
+		elif message_type == RELEASE_MESSAGE_CODE:
+			return ReleaseMessage.deserialize(data)
 		else: #other message types
 			pass
+
+class ReleaseMessage(Message):
+	
+	def serialize(self):
+		return struct.pack("!BI", RELEASE_MESSAGE_CODE, self.num_tickets)
+
+	def __init__(self, num_tickets):
+		self.num_tickets = num_tickets
+		super(ReplyMessage, self)(self.serialize())
+
+	@staticmethod
+	def deserialize(data):
+		msg_code, num_tickets = struct.unpack("!BI", data)
+		assert msg_code == RELEASE_MESSAGE_CODE
+		return ReleaseMessage(num_tickets)
+	
+class ReplyMessage(Message):
+
+	def serialize(self):
+		return struct.pack("!BI", REPLY_MESSAGE_CODE, 0)
+
+	def __init__(self):
+		super(ReplyMessage, self)(self.serialize())
+	
+	@staticmethod	
+	def deserialize(data):
+		msg_code, fpoint = struct.unpack("!BI", data)
+		assert msg_code == REPLY_MESSAGE_CODE
+		return ReplyMessage()
 
 class RequestMessage(Message):
 	
@@ -80,7 +114,8 @@ class BuyMessageResponse(Message):
 	
 	@staticmethod
 	def deserialize(data):
-		success = struct.unpack("!I", data[1:5])
+		msg_code, success = struct.unpack("!BI", data)
+		assert msg_code == BUY_MESSAGE_CODE
 		return BuyMessageResponse(success == BUY_SUCCESS)
 	
 
