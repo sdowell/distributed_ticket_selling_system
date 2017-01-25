@@ -1,6 +1,8 @@
+import message
+import config 
 
 def main():
-	print "Start datacenter"
+	print("Start datacenter")
 	exit()
 
 if __name__ == "__main__":
