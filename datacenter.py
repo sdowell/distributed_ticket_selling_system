@@ -29,11 +29,19 @@ def get_kiosk_number():
 		kiosk_num = int(sys.argv[1])
 		return kiosk_num
 
+
+def handle_message(message):
+	message.Message.deserialize(message)
+
+
 def main():
 	print("Start datacenter")
 	cfg = config.Config.from_file("config.txt")
+	message.TOTAL_KIOSKS = len(cfg.kiosks)
+	print(message.TOTAL_KIOSKS)
 	kiosk_number = get_kiosk_number()
 	server_addr = cfg.kiosks[kiosk_number]
+	num_tickets = cfg.num_tickets
 	server = ThreadedTCPServer(server_addr, ThreadedTCPRequestHandler)
 	server_thread = threading.Thread(target = server.serve_forever)
 	server_thread.daemon = True

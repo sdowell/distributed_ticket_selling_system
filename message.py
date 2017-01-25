@@ -1,9 +1,11 @@
 import struct
-
+from math import floor, ceil
 BUY_MESSAGE_CODE = 1
 BUY_MESSAGE_RESPONSE_CODE = 2
 BUY_SUCCESS = 1
 BUY_FAIL = 0
+REQUEST_MESSAGE_CODE = 3
+TOTAL_KIOSKS = None 
 
 class Message:
 
@@ -23,9 +25,32 @@ class Message:
 			return BuyMessage.deserialize(data)
 		elif message_type == BUY_MESSAGE_RESPONSE_CODE:
 			return BuyMessageResponse.deserialize(data)
+		elif message_type == REQUEST_MESSAGE_CODE:
+			return RequestMessage.deserialize(data)
 		else: #other message types
 			pass
 
+class RequestMessage(Message):
+	
+	def serialize(self):
+		return struct.pack("!Bf", REQUEST_MESSAGE_CODE, (float(self.lamport_clock) + float(self.pid)/self.total_kiosks))
+
+	def __init__(self, lamport_clock, process_id):
+		self.lamport_clock = lamport_clock
+		self.pid = process_id
+		self.rank = (float(self.lamport_clock) + float(self.pid)/TOTAL_KIOSKS)
+		super(RequestMessage, self).__init__(self.serialize())
+	
+	@staticmethod
+	def deserialize(data):
+		msg_code, fpoint = struct.unpack("!Bf", data)
+		assert msg_code == REQUEST_MESSAGE_CODE
+		lamport_clock = floor(fpoint)
+		process_id = (float(fpoint)-float(lamport_clock))*float(TOTAL_KIOSKS)
+		process_id = int(round(process_id))
+		return RequestMessage(lamport_clock, process_id)
+		
+	
 
 class BuyMessage(Message):
 
