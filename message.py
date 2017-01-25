@@ -15,7 +15,9 @@ class Message:
 		pass
 
 	@staticmethod
-	def deserialize(self, data):
+	def deserialize(data):
+		#print(str(type(data)))
+		#print(str(len(data)))
 		message_type = struct.unpack("!B",data[0:1])
 		if message_type == BUY_MESSAGE_CODE:
 			return BuyMessage.deserialize(data)
@@ -35,7 +37,7 @@ class BuyMessage(Message):
 		super(BuyMessage, self).__init__(self.serialize())
 
 	@staticmethod
-	def deserialize(self, data):
+	def deserialize(data):
 		num_tickets = struct.unpack("!I",data[1:5])
 		return BuyMessage(num_tickets)
 
@@ -52,7 +54,7 @@ class BuyMessageResponse(Message):
 		super(BuyMessageResponse, self).__init__(self.serialize())
 	
 	@staticmethod
-	def deserialize(self, data):
+	def deserialize(data):
 		success = struct.unpack("!I", data[1:5])
 		return BuyMessageResponse(success == BUY_SUCCESS)
 	

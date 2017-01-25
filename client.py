@@ -4,7 +4,8 @@ import message
 
 def requestTickets(kiosk, tickets):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.connect(('localhost', int(kiosk)))
+	print("Attempting to connect to port: " + str(kiosk))
+	s.connect((str(kiosk[0]), int(kiosk[1])))
 	buy_message = message.BuyMessage(tickets)
 	s.send(buy_message.data)
 	response = s.recv(16)
@@ -47,7 +48,7 @@ def cmdUI(cfg):
 			print("Invalid input")
 			continue
 		#request to purchase tickets from selected kiosk
-		success = requestTickets(myKiosk, buytickets)
+		success = requestTickets(cfg.kiosks[myKiosk], buytickets)
 		if success == message.BUY_SUCCESS:
 			print("Tickets purchased successfully")
 		elif success == message.BUY_FAIL:
