@@ -7,9 +7,10 @@ def requestTickets(kiosk, tickets):
 	s.connect(('localhost', int(kiosk)))
 	buy_message = message.BuyMessage(tickets)
 	s.send(buy_message.data)
-	response = s.recv(1024)
+	response = s.recv(16)
+	success = message.Message.deserialize(response)
 	s.close()
-	return response
+	return success
 
 def cmdUI(cfg):
 	done = False
@@ -21,7 +22,11 @@ def cmdUI(cfg):
 			i = i + 1
 		print(str(i) + ". exit")
 		#ask user for kiosk to connect to
-		a_input = input("Please choose a kiosk or exit: ")
+		try:
+			a_input = input("Please choose a kiosk or exit: ")
+		except NameError:
+			print("Invalid input: expected int")
+			continue
 		try:
 			a_input = int(a_input)
 		except ValueError:
@@ -42,7 +47,14 @@ def cmdUI(cfg):
 			print("Invalid input")
 			continue
 		#request to purchase tickets from selected kiosk
-		response = requestTickets(myKiosk, buytickets)
+		success = requestTickets(myKiosk, buytickets)
+		if success == message.BUY_SUCCESS:
+			print("Tickets purchased successfully")
+		elif success == message.BUY_FAIL:
+			print("Tickets not purchased")
+		else:
+			print("Error: unrecognized response")
+		
 
 def main():
 	print("Starting client...")
