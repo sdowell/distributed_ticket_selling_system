@@ -28,7 +28,7 @@ def cmdUI(cfg):
 		if a_input < 0 or a_input > i:
 			print("Input out of range")
 			continue
-		if input == i:
+		if a_input == i:
 			done = True
 			break
 		myKiosk = a_input
