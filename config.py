@@ -23,7 +23,7 @@ class Config:
                     delay = 0
                 if numtickets == None:
                     pass #Do something later?
-        return Cfg.__init__(kiosks, delay, tickets = numtickets)
+        return Config(kiosks, delay, tickets = numtickets)
 
     def to_file(filename):
         pass
