@@ -48,10 +48,10 @@ def cmdUI(cfg):
 			print("Invalid input")
 			continue
 		#request to purchase tickets from selected kiosk
-		success = requestTickets(cfg.kiosks[myKiosk], buytickets)
-		if success == message.BUY_SUCCESS:
+		response = requestTickets(cfg.kiosks[myKiosk], buytickets)
+		if response.success == message.BUY_SUCCESS:
 			print("Tickets purchased successfully")
-		elif success == message.BUY_FAIL:
+		elif response.success == message.BUY_FAIL:
 			print("Tickets not purchased")
 		else:
 			print("Error: unrecognized response")
