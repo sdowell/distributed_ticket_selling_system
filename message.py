@@ -19,15 +19,8 @@ class Message:
 
 	@staticmethod
 	def deserialize(data):
-		#print(str(type(data)))
-		#print(str(len(data)))
-		print(data)
-		print(len(data))
-		print(type(data))
 		message_type = struct.unpack("!B",data[0:1])[0]
-		print(message_type)
 		if message_type == BUY_MESSAGE_CODE:
-			print("RECIEVED BUY MESSAGE")
 			return BuyMessage.deserialize(data)
 		elif message_type == BUY_MESSAGE_RESPONSE_CODE:
 			return BuyMessageResponse.deserialize(data)

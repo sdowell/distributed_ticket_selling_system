@@ -14,6 +14,7 @@ pq = queue.PriorityQueue()
 pq_lock = threading.RLock()
 lclock = 0
 lclock_lock = threading.RLock()
+tlock = threading.RLock()
 cfg = None
 tickets = None
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
@@ -47,6 +48,11 @@ def get_kiosk_number():
 		kiosk_num = int(sys.argv[1])
 		return kiosk_num
 
+def update_tickets(val):
+	global tickets
+	with ticket_lock:
+		tickets = val
+		print("Updated ticket pool: %d" % tickets)
 
 def sync_lclock(clock_val = None):
 	global lclock
@@ -55,6 +61,7 @@ def sync_lclock(clock_val = None):
 			lclock = clock_val + 1
 		else:
 			lclock = lclock + 1
+		print("Updated lamport_clock, new value: %d" % lclock)
 
 def handle_message(our_message):
 	global tickets
@@ -64,7 +71,6 @@ def handle_message(our_message):
 		pq.put((our_request_message.rank, our_request_message))
 		return message.ReplyMessage()
 	elif type(our_message) is message.BuyMessage:
-		print("GOT BUY MESSAGE")
 		our_buy_message = our_message
 		our_sockets = [None]*message.TOTAL_KIOSKS
 		readers, writers, errors = [],[],[]
@@ -98,11 +104,12 @@ def handle_message(our_message):
 				if our_tuple[1] == our_buy_message:
 					recvd = True
 					success = None
-					if our_buy_message.num_tickets <= tickets:
-						success = True
-						tickets -= our_buy_message.num_tickets
-					else:
-						success = False
+					with ticket_lock:
+						if our_buy_message.num_tickets <= tickets:
+							success = True
+							update_tickets(tickets - our_buy_message.num_tickets)
+						else:
+							success = False
 					while len(release_writers) != 0:
 						_, pwriters, _ = select.select([],release_writers, [])
 						for writer in pwriters:
@@ -113,7 +120,8 @@ def handle_message(our_message):
 					pq.put(our_tuple)
 					sleep(1)
 	elif type(our_message) is message.ReleaseMessage:
-		tickets = our_message.num_tickets
+		update_tickets(our_message.num_tickets)
+		#tickets = our_message.num_tickets
 		pq.get() #scary
 		return None
 
@@ -125,7 +133,6 @@ def main():
 	global tickets
 	tickets = cfg.tickets
 	message.TOTAL_KIOSKS = len(cfg.kiosks)
-	print(message.TOTAL_KIOSKS)
 	kiosk_number = get_kiosk_number()
 	server_addr = cfg.kiosks[kiosk_number]
 	num_tickets = cfg.tickets
