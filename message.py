@@ -55,7 +55,7 @@ class ReplyMessage(Message):
 
 	def __init__(self):
 		super(ReplyMessage, self).__init__(self.serialize())
-	
+
 	@staticmethod	
 	def deserialize(data):
 		msg_code, fpoint = struct.unpack("!BI", data)

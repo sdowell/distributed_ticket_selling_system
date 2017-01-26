@@ -22,7 +22,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 	def handle(self):
 		message_in = recieve_message(self.request)
 		cur_thread = threading.current_thread()
-		response_message = handle_message(message_in)
+		response_message = handle_message(message_in, self.request)
 		send_message(self.request, response_message)
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
@@ -37,7 +37,7 @@ def recieve_message(a_socket):
 
 def send_message(a_socket, m_out = None):
 	if m_out is not None:
-		a_socket.send(m_out.data)
+		a_socket.send(m_out.serialize())
 		print("Sent message of type: %s to %s" % (str(type(m_out)), str(a_socket.getpeername())))
 
 def get_kiosk_number():
@@ -63,13 +63,18 @@ def sync_lclock(clock_val = None):
 			lclock = lclock + 1
 		print("Updated lamport_clock, new value: %d" % lclock)
 
-def handle_message(our_message):
+def handle_message(our_message, our_socket):
 	global tickets
 	if type(our_message) is message.RequestMessage:
 		our_request_message = our_message
 		sync_lclock(our_message.lamport_clock)
 		pq.put((our_request_message.rank, our_request_message))
-		return message.ReplyMessage()
+		send_message(our_socket, message.ReplyMessage())
+		release_message = recieve_message(our_socket)
+		assert type(release_message) is message.ReleaseMessage
+		update_tickets(release_message.num_tickets)
+		pq.get()
+		return None
 	elif type(our_message) is message.BuyMessage:
 		our_buy_message = our_message
 		our_sockets = [None]*message.TOTAL_KIOSKS
@@ -119,11 +124,8 @@ def handle_message(our_message):
 				else:
 					pq.put(our_tuple)
 					sleep(1)
-	elif type(our_message) is message.ReleaseMessage:
-		update_tickets(our_message.num_tickets)
-		#tickets = our_message.num_tickets
-		pq.get() #scary
-		return None
+	else:
+		pass
 
 
 def main():
