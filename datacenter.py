@@ -14,7 +14,7 @@ pq = queue.PriorityQueue()
 pq_lock = threading.RLock()
 lclock = 0
 lclock_lock = threading.RLock()
-tlock = threading.RLock()
+ticket_lock = threading.RLock()
 cfg = None
 tickets = None
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
