@@ -110,11 +110,11 @@ def handle_message(our_message):
 							update_tickets(tickets - our_buy_message.num_tickets)
 						else:
 							success = False
-					while len(release_writers) != 0:
-						_, pwriters, _ = select.select([],release_writers, [])
-						for writer in pwriters:
-							send_message(writer, message.ReleaseMessage(tickets))
-							release_writers.remove(writer)
+						while len(release_writers) != 0:
+							_, pwriters, _ = select.select([],release_writers, [])
+							for writer in pwriters:
+								send_message(writer, message.ReleaseMessage(tickets))
+								release_writers.remove(writer)
 					return message.BuyMessageResponse(success)
 				else:
 					pq.put(our_tuple)
