@@ -45,12 +45,12 @@ def sync_lclock(clock_val):
 		else:
 			lclock = lclock + 1
 
-def handle_message(message):
+def handle_message(recv_message):
 	global tickets
-	our_message = message.Message.deserialize(message)
+	our_message = message.Message.deserialize(recv_message)
 	if type(our_message) is message.RequestMessage:
 		our_request_message = our_message
-		sync_lclock()
+		sync_lclock(our_message.lamport_clock)
 		pq.put((our_request_message.rank, our_request_message))
 		return message.ReplyMessage()
 	elif type(our_message) is message.BuyMessage:
@@ -85,7 +85,7 @@ def handle_message(message):
 				our_tuple = pq.get()
 				if our_tuple[1] == our_buy_message:
 					recvd = True
-					sync_lclock()
+					sync_lclock(None)
 					success = None
 					if our_buy_message.num_tickets <= tickets:
 						success = True
@@ -117,7 +117,7 @@ def main():
 	print(message.TOTAL_KIOSKS)
 	kiosk_number = get_kiosk_number()
 	server_addr = cfg.kiosks[kiosk_number]
-	num_tickets = cfg.num_tickets
+	num_tickets = cfg.tickets
 	server = ThreadedTCPServer(server_addr, ThreadedTCPRequestHandler)
 	server_thread = threading.Thread(target = server.serve_forever)
 	server_thread.daemon = True
