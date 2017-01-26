@@ -19,16 +19,25 @@ tickets = None
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 	
 	def handle(self):
-		data_in = self.request.recv(5)
+		message_in = recieve_message(self.request)
 		cur_thread = threading.current_thread()
-		response_message = handle_message(data_in)
-		if response_message is not None:
-			self.request.sendall(response_message.serialize())
+		response_message = handle_message(message_in)
+		send_message(self.request, response_message)
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 	
 	def __exit__(self):
 		self.shutdown()
+
+def recieve_message(a_socket):
+	m_in = message.Message.deserialize(a_socket.recv(5))
+	print("Recieved message of type: %s from %s" % (str(type(m_in)), str(a_socket.getpeername())))
+	return m_in
+
+def send_message(a_socket, m_out = None):
+	if m_out is not None:
+		a_socket.send(m_out.data)
+		print("Sent message of type: %s to %s" % (str(type(m_out)), str(a_socket.getpeername())))
 
 def get_kiosk_number():
 	if len(sys.argv) < 2:
@@ -47,10 +56,8 @@ def sync_lclock(clock_val = None):
 		else:
 			lclock = lclock + 1
 
-def handle_message(recv_message):
+def handle_message(our_message):
 	global tickets
-	our_message = message.Message.deserialize(recv_message)
-	print(str(our_message))
 	if type(our_message) is message.RequestMessage:
 		our_request_message = our_message
 		sync_lclock(our_message.lamport_clock)
@@ -76,13 +83,12 @@ def handle_message(recv_message):
 			while len(writers) != 0:
 				_ , pwriters , _ = select.select(readers, writers, errors)
 				for writer in pwriters:
-					writer.send(message.RequestMessage(lclock, get_kiosk_number()).data)
+					send_message(writer, message.RequestMessage(lclock,get_kiosk_number()))
 					writers.remove(writer)
 			while len(readers) != 0:
 				preaders, _ , _ = select.select(readers, writers, errors)
 				for reader in preaders:
-					data_in = reader.recv(5)
-					message_in = message.Message.deserialize(data_in)
+					message_in = recieve_message(reader)
 					assert type(message_in) is message.ReplyMessage
 					readers.remove(reader)
 		recvd = False
@@ -100,7 +106,7 @@ def handle_message(recv_message):
 					while len(release_writers) != 0:
 						_, pwriters, _ = select.select([],release_writers, [])
 						for writer in pwriters:
-							writer.send(message.ReleaseMessage(tickets).data)
+							send_message(writer, message.ReleaseMessage(tickets))
 							release_writers.remove(writer)
 					return message.BuyMessageResponse(success)
 				else:
