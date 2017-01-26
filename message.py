@@ -64,6 +64,9 @@ class ReplyMessage(Message):
 		assert msg_code == REPLY_MESSAGE_CODE
 		return ReplyMessage()
 
+def get_rank(lclock, pid):
+	return (float(lclock) + (float(pid)/TOTAL_KIOSKS))
+
 class RequestMessage(Message):
 	
 	def serialize(self):
@@ -72,7 +75,7 @@ class RequestMessage(Message):
 	def __init__(self, lamport_clock, process_id):
 		self.lamport_clock = lamport_clock
 		self.pid = process_id
-		self.rank = (float(self.lamport_clock) + float(self.pid)/TOTAL_KIOSKS)
+		self.rank = get_rank(self.lamport_clock, self.pid)
 		super(RequestMessage, self).__init__(self.serialize())
 	
 	@staticmethod

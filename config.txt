@@ -1,7 +1,3 @@
-kiosk 5001
-kiosk 5002
-kiosk 5003
-kiosk 5004
-kiosk 5005
+kiosk 5000
 tickets 100
-delay 5
+delay 0

@@ -12,7 +12,7 @@ run_server = True
 pq = queue.PriorityQueue()
 pq_lock = threading.RLock()
 lclock = 0
-lclock_lock = threading.Lock()
+lclock_lock = threading.RLock()
 cfg = None
 tickets = None
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
@@ -39,6 +39,7 @@ def get_kiosk_number():
 
 
 def sync_lclock(clock_val):
+	global lclock
 	with lclock_lock:
 		if clock_val is not None and clock_val >= lclock_lock:
 			lclock = clock_val + 1
@@ -59,6 +60,8 @@ def handle_message(recv_message):
 		readers, writers, errors = [],[],[]
 		release_writers = []
 		with lclock_lock:
+			sync_lclock()
+			pq.put((message.get_rank( lclock, get_kiosk_number()),our_buy_message))
 			for x in range(0, TOTAL_KIOSKS):
 				if x is not get_kiosk_number():
 					our_sockets[x] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -85,7 +88,6 @@ def handle_message(recv_message):
 				our_tuple = pq.get()
 				if our_tuple[1] == our_buy_message:
 					recvd = True
-					sync_lclock(None)
 					success = None
 					if our_buy_message.num_tickets <= tickets:
 						success = True
