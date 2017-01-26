@@ -38,7 +38,7 @@ def get_kiosk_number():
 		return kiosk_num
 
 
-def sync_lclock(clock_val):
+def sync_lclock(clock_val = None):
 	global lclock
 	with lclock_lock:
 		if clock_val is not None and clock_val >= lclock_lock:
@@ -49,20 +49,22 @@ def sync_lclock(clock_val):
 def handle_message(recv_message):
 	global tickets
 	our_message = message.Message.deserialize(recv_message)
+	print(str(our_message))
 	if type(our_message) is message.RequestMessage:
 		our_request_message = our_message
 		sync_lclock(our_message.lamport_clock)
 		pq.put((our_request_message.rank, our_request_message))
 		return message.ReplyMessage()
 	elif type(our_message) is message.BuyMessage:
+		print("GOT BUY MESSAGE")
 		our_buy_message = our_message
-		our_sockets = [None]*TOTAL_KIOSKS
+		our_sockets = [None]*message.TOTAL_KIOSKS
 		readers, writers, errors = [],[],[]
 		release_writers = []
 		with lclock_lock:
 			sync_lclock()
 			pq.put((message.get_rank( lclock, get_kiosk_number()),our_buy_message))
-			for x in range(0, TOTAL_KIOSKS):
+			for x in range(0, message.TOTAL_KIOSKS):
 				if x is not get_kiosk_number():
 					our_sockets[x] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 					our_sockets[x].setblocking(0)
@@ -99,7 +101,7 @@ def handle_message(recv_message):
 						for writer in pwriters:
 							writer.send(message.ReleaseMessage(tickets).data)
 							release_writers.remove(writer)
-					return message.BuyResponseMesssage(success)
+					return message.BuyMessageResponse(success)
 				else:
 					pq.put(our_tuple)
 					sleep(1)

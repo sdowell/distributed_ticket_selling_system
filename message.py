@@ -21,8 +21,13 @@ class Message:
 	def deserialize(data):
 		#print(str(type(data)))
 		#print(str(len(data)))
-		message_type = struct.unpack("!B",data[0:1])
+		print(data)
+		print(len(data))
+		print(type(data))
+		message_type = struct.unpack("!B",data[0:1])[0]
+		print(message_type)
 		if message_type == BUY_MESSAGE_CODE:
+			print("RECIEVED BUY MESSAGE")
 			return BuyMessage.deserialize(data)
 		elif message_type == BUY_MESSAGE_RESPONSE_CODE:
 			return BuyMessageResponse.deserialize(data)
@@ -100,8 +105,9 @@ class BuyMessage(Message):
 
 	@staticmethod
 	def deserialize(data):
-		num_tickets = struct.unpack("!I",data[1:5])
-		return BuyMessage(num_tickets)
+		msg_code, num_tickets = struct.unpack("!BI",data[0:5])
+		assert msg_code == BUY_MESSAGE_CODE
+		return BuyMessage(int(num_tickets))
 
 class BuyMessageResponse(Message):
 
@@ -118,7 +124,7 @@ class BuyMessageResponse(Message):
 	@staticmethod
 	def deserialize(data):
 		msg_code, success = struct.unpack("!BI", data)
-		assert msg_code == BUY_MESSAGE_CODE
+		assert msg_code == BUY_MESSAGE_RESPONSE_CODE
 		return BuyMessageResponse(success == BUY_SUCCESS)
 	
 
