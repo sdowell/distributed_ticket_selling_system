@@ -47,7 +47,7 @@ class ReleaseMessage(Message):
 
 	def __init__(self, num_tickets):
 		self.num_tickets = num_tickets
-		super(ReplyMessage, self)(self.serialize())
+		super(ReleaseMessage, self).__init__(self.serialize())
 
 	@staticmethod
 	def deserialize(data):
@@ -61,7 +61,7 @@ class ReplyMessage(Message):
 		return struct.pack("!BI", REPLY_MESSAGE_CODE, 0)
 
 	def __init__(self):
-		super(ReplyMessage, self)(self.serialize())
+		super(ReplyMessage, self).__init__(self.serialize())
 	
 	@staticmethod	
 	def deserialize(data):
@@ -75,7 +75,7 @@ def get_rank(lclock, pid):
 class RequestMessage(Message):
 	
 	def serialize(self):
-		return struct.pack("!Bf", REQUEST_MESSAGE_CODE, (float(self.lamport_clock) + float(self.pid)/self.total_kiosks))
+		return struct.pack("!Bf", REQUEST_MESSAGE_CODE, (float(self.lamport_clock) + float(self.pid)/TOTAL_KIOSKS))
 
 	def __init__(self, lamport_clock, process_id):
 		self.lamport_clock = lamport_clock

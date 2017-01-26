@@ -3,6 +3,7 @@ import threading
 import socketserver
 import sys
 import queue
+import select
 
 import message
 import config 
@@ -41,7 +42,7 @@ def get_kiosk_number():
 def sync_lclock(clock_val = None):
 	global lclock
 	with lclock_lock:
-		if clock_val is not None and clock_val >= lclock_lock:
+		if clock_val is not None and clock_val >= lclock:
 			lclock = clock_val + 1
 		else:
 			lclock = lclock + 1
@@ -67,8 +68,8 @@ def handle_message(recv_message):
 			for x in range(0, message.TOTAL_KIOSKS):
 				if x is not get_kiosk_number():
 					our_sockets[x] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-					our_sockets[x].setblocking(0)
 					our_sockets[x].connect(cfg.kiosks[x])
+					our_sockets[x].setblocking(0)
 					writers.append(our_sockets[x])
 					readers.append(our_sockets[x])
 					release_writers.append(our_sockets[x])
@@ -80,9 +81,9 @@ def handle_message(recv_message):
 			while len(readers) != 0:
 				preaders, _ , _ = select.select(readers, writers, errors)
 				for reader in preaders:
-					data_in = reader.recv()
-					message_in = message.deserialize(data_in)
-					assert type(message_in) is ReplyMessage
+					data_in = reader.recv(5)
+					message_in = message.Message.deserialize(data_in)
+					assert type(message_in) is message.ReplyMessage
 					readers.remove(reader)
 		recvd = False
 		while recvd == False:
