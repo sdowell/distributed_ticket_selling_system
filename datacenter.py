@@ -75,7 +75,8 @@ def handle_message(our_message, our_socket):
 		release_message = recieve_message(our_socket)
 		assert type(release_message) is message.ReleaseMessage
 		update_tickets(release_message.num_tickets)
-		pq.get()
+		with pq_lock:
+			pq.get()
 		return None
 	elif type(our_message) is message.BuyMessage:
 		our_buy_message = our_message
@@ -126,7 +127,7 @@ def handle_message(our_message, our_socket):
 					return message.BuyMessageResponse(success)
 				else:
 					pq.put(our_tuple)
-					time.sleep(float(delay)/2)
+			time.sleep(float(delay)/2)
 	else:
 		pass
 
