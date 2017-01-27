@@ -4,7 +4,7 @@ import socketserver
 import sys
 import queue
 import select
-
+import time
 import message
 import config 
 
@@ -17,6 +17,7 @@ lclock_lock = threading.RLock()
 ticket_lock = threading.RLock()
 cfg = None
 tickets = None
+delay = None
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 	
 	def handle(self):
@@ -32,6 +33,7 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 def recieve_message(a_socket):
 	m_in = message.Message.deserialize(a_socket.recv(5))
+	time.sleep(delay)
 	print("Recieved message of type: %s from %s" % (str(type(m_in)), str(a_socket.getpeername())))
 	return m_in
 
@@ -96,16 +98,17 @@ def handle_message(our_message, our_socket):
 				for writer in pwriters:
 					send_message(writer, message.RequestMessage(lclock,get_kiosk_number()))
 					writers.remove(writer)
-			while len(readers) != 0:
-				preaders, _ , _ = select.select(readers, writers, errors)
-				for reader in preaders:
-					message_in = recieve_message(reader)
-					assert type(message_in) is message.ReplyMessage
-					readers.remove(reader)
+		while len(readers) != 0:
+			preaders, _ , _ = select.select(readers, writers, errors)
+			for reader in preaders:
+				message_in = recieve_message(reader)
+				assert type(message_in) is message.ReplyMessage
+				readers.remove(reader)
 		recvd = False
 		while recvd == False:
 			with pq_lock:
 				our_tuple = pq.get()
+				#print("Pulled rank %f off the queue" % our_tuple[0])
 				if our_tuple[1] == our_buy_message:
 					recvd = True
 					success = None
@@ -123,7 +126,7 @@ def handle_message(our_message, our_socket):
 					return message.BuyMessageResponse(success)
 				else:
 					pq.put(our_tuple)
-					sleep(1)
+					time.sleep(float(delay)/2)
 	else:
 		pass
 
@@ -134,6 +137,8 @@ def main():
 	cfg  = config.Config.from_file("config.txt")
 	global tickets
 	tickets = cfg.tickets
+	global delay
+	delay = cfg.delay
 	message.TOTAL_KIOSKS = len(cfg.kiosks)
 	kiosk_number = get_kiosk_number()
 	server_addr = cfg.kiosks[kiosk_number]

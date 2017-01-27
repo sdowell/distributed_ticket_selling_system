@@ -1,6 +1,9 @@
 import socket
 import config
 import message
+import time
+
+delay = None
 
 def requestTickets(kiosk, tickets):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -9,6 +12,7 @@ def requestTickets(kiosk, tickets):
 	buy_message = message.BuyMessage(tickets)
 	s.send(buy_message.data)
 	response = s.recv(16)
+	time.sleep(delay)
 	success = message.Message.deserialize(response)
 	s.close()
 	return success
@@ -60,6 +64,8 @@ def cmdUI(cfg):
 def main():
 	print("Starting client...")
 	cfg = config.Config.from_file("config.txt")
+	global delay
+	delay = cfg.delay
 	cmdUI(cfg)
 	exit()
 
